@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>E-Commerce SQL Analysis — Pragati Pawara</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap');
+*{margin:0;padding:0;box-sizing:border-box;}
+:root{--green:#00ff88;--blue:#4f8ef7;--purple:#9b59f7;--bg:#050508;--card:#0a0a12;}
+body{background:var(--bg);color:#fff;font-family:'Inter',sans-serif;overflow-x:hidden;}
+
+/* CANVAS BG */
+#bg-canvas{position:fixed;top:0;left:0;z-index:0;pointer-events:none;}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:100;padding:16px 48px;display:flex;justify-content:space-between;align-items:center;background:rgba(5,5,8,.8);backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,255,255,.05);}
+.nav-logo{font-size:.8rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;background:linear-gradient(135deg,var(--green),var(--blue));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.nav-links{display:flex;gap:28px;}
+.nav-links a{color:rgba(255,255,255,.4);font-size:.72rem;letter-spacing:.15em;text-transform:uppercase;text-decoration:none;transition:.2s;}
+.nav-links a:hover{color:#fff;}
+
+/* HERO */
+.hero{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:100px 40px 60px;position:relative;z-index:1;}
+.hero-badge{display:inline-flex;align-items:center;gap:8px;padding:8px 20px;border-radius:50px;border:1px solid rgba(0,255,136,.2);background:rgba(0,255,136,.05);font-size:.7rem;letter-spacing:.3em;text-transform:uppercase;color:var(--green);margin-bottom:28px;}
+.hero-badge-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.5;transform:scale(1.5);}}
+.hero-title{font-size:clamp(2.5rem,6vw,5rem);font-weight:900;letter-spacing:-.03em;line-height:1.05;margin-bottom:20px;}
+.hero-title span{background:linear-gradient(135deg,#fff 30%,rgba(0,255,136,.7));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.hero-sub{font-size:clamp(.9rem,1.5vw,1.1rem);color:rgba(255,255,255,.4);max-width:540px;line-height:1.7;margin-bottom:40px;}
+.hero-meta{display:flex;gap:32px;justify-content:center;flex-wrap:wrap;margin-bottom:48px;}
+.hero-meta-item{text-align:center;}
+.hero-meta-num{font-size:1.8rem;font-weight:900;background:linear-gradient(135deg,var(--green),var(--blue));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.hero-meta-label{font-size:.65rem;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.3);margin-top:2px;}
+.hero-btn{padding:14px 36px;border-radius:50px;background:linear-gradient(135deg,rgba(0,255,136,.1),rgba(79,142,247,.1));border:1px solid rgba(0,255,136,.3);color:#fff;font-size:.8rem;letter-spacing:.2em;text-transform:uppercase;cursor:pointer;text-decoration:none;transition:.3s;}
+.hero-btn:hover{background:linear-gradient(135deg,rgba(0,255,136,.2),rgba(79,142,247,.2));border-color:rgba(0,255,136,.6);}
+
+/* 3D ROTATING SCHEMA */
+.schema-3d-wrap{position:relative;z-index:1;padding:80px 40px;text-align:center;}
+.section-label{font-size:.65rem;letter-spacing:.4em;text-transform:uppercase;color:var(--green);margin-bottom:12px;}
+.section-title{font-size:clamp(1.8rem,3.5vw,3rem);font-weight:800;letter-spacing:-.02em;margin-bottom:48px;}
+.schema-canvas-wrap{max-width:900px;margin:0 auto;}
+#schema-canvas{border-radius:24px;border:1px solid rgba(255,255,255,.06);background:rgba(10,10,18,.8);}
+
+/* QUERIES */
+.queries-section{position:relative;z-index:1;padding:60px 40px;max-width:1000px;margin:0 auto;}
+.query-grid{display:flex;flex-direction:column;gap:16px;}
+.q-card{background:rgba(10,10,18,.9);border:1px solid rgba(255,255,255,.06);border-radius:20px;overflow:hidden;transition:.3s;cursor:pointer;}
+.q-card:hover{border-color:rgba(0,255,136,.2);transform:translateX(4px);}
+.q-card.active{border-color:rgba(0,255,136,.3);}
+.q-head{padding:18px 24px;display:flex;align-items:center;justify-content:space-between;}
+.q-left{display:flex;align-items:center;gap:16px;}
+.q-num{font-size:1.6rem;font-weight:900;background:linear-gradient(135deg,var(--green),var(--blue));-webkit-background-clip:text;-webkit-text-fill-color:transparent;min-width:40px;}
+.q-info{}
+.q-title{font-weight:600;font-size:.92rem;margin-bottom:3px;}
+.q-concept{font-size:.7rem;color:rgba(0,255,136,.7);letter-spacing:.1em;}
+.q-arrow{color:rgba(255,255,255,.3);transition:.3s;font-size:1.2rem;}
+.q-card.active .q-arrow{transform:rotate(90deg);color:var(--green);}
+.q-body{display:none;border-top:1px solid rgba(255,255,255,.05);}
+.q-card.active .q-body{display:block;}
+.code-wrap{background:#0d0d1a;padding:20px 24px;overflow-x:auto;}
+.code-wrap pre{font-family:'JetBrains Mono',monospace;font-size:.78rem;line-height:1.8;color:#a6accd;}
+.kw{color:#c792ea;}.fn{color:#82aaff;}.str{color:#c3e88d;}.cm{color:#546e7a;font-style:italic;}
+.result-wrap{padding:0;}
+.rtable{width:100%;border-collapse:collapse;}
+.rtable th{background:rgba(0,255,136,.05);padding:10px 20px;text-align:left;font-size:.68rem;letter-spacing:.15em;text-transform:uppercase;color:rgba(0,255,136,.6);border-bottom:1px solid rgba(255,255,255,.05);}
+.rtable td{padding:10px 20px;font-size:.82rem;color:rgba(255,255,255,.6);border-bottom:1px solid rgba(255,255,255,.04);}
+.rtable tr:last-child td{border-bottom:none;}
+.rtable td.hi{color:var(--green);font-weight:600;}
+.rtable tr:hover td{background:rgba(255,255,255,.02);}
+
+/* INSIGHTS */
+.insights-section{position:relative;z-index:1;padding:60px 40px;max-width:1000px;margin:0 auto;}
+.insights-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+.ins-card{background:rgba(10,10,18,.9);border:1px solid rgba(255,255,255,.06);border-radius:20px;padding:28px;transition:.3s;position:relative;overflow:hidden;}
+.ins-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--green),var(--blue));opacity:0;transition:.3s;}
+.ins-card:hover{border-color:rgba(0,255,136,.15);transform:translateY(-4px);}
+.ins-card:hover::before{opacity:1;}
+.ins-num{font-size:2.5rem;font-weight:900;background:linear-gradient(135deg,var(--green),var(--blue));-webkit-background-clip:text;-webkit-text-fill-color:transparent;line-height:1;margin-bottom:12px;}
+.ins-title{font-weight:700;font-size:.9rem;margin-bottom:8px;}
+.ins-text{font-size:.8rem;color:rgba(255,255,255,.4);line-height:1.7;}
+.ins-val{color:var(--green);font-weight:600;}
+
+/* FOOTER */
+footer{position:relative;z-index:1;border-top:1px solid rgba(255,255,255,.05);padding:32px 48px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;}
+.footer-name{font-size:.82rem;font-weight:600;color:rgba(255,255,255,.5);}
+.footer-links{display:flex;gap:20px;}
+.footer-links a{font-size:.75rem;color:rgba(255,255,255,.3);text-decoration:none;transition:.2s;}
+.footer-links a:hover{color:#fff;}
+
+@media(max-width:768px){
+  nav{padding:14px 20px;}.nav-links{display:none;}
+  .hero{padding:80px 20px 40px;}
+  .hero-meta{gap:20px;}
+  .queries-section,.insights-section,.schema-3d-wrap{padding:40px 20px;}
+  .insights-grid{grid-template-columns:1fr;}
+  footer{padding:24px 20px;}
+}
+</style>
+</head>
+<body>
+
+<canvas id="bg-canvas"></canvas>
+
+<nav>
+  <div class="nav-logo">Pragati Pawara</div>
+  <div class="nav-links">
+    <a href="#schema">Schema</a>
+    <a href="#queries">Queries</a>
+    <a href="#insights">Insights</a>
+    <a href="https://github.com/pragatipawara" target="_blank">GitHub</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-badge"><div class="hero-badge-dot"></div>SQL Case Study</div>
+  <h1 class="hero-title"><span>E-Commerce<br>Sales Analysis</span></h1>
+  <p class="hero-sub">10 SQL queries. 4 relational tables. Real business questions answered — from basic aggregations to CTEs and window functions.</p>
+  <div class="hero-meta">
+    <div class="hero-meta-item"><div class="hero-meta-num">₹10.3L</div><div class="hero-meta-label">Total Revenue</div></div>
+    <div class="hero-meta-item"><div class="hero-meta-num">29</div><div class="hero-meta-label">Orders</div></div>
+    <div class="hero-meta-item"><div class="hero-meta-num">53%</div><div class="hero-meta-label">Repeat Rate</div></div>
+    <div class="hero-meta-item"><div class="hero-meta-num">10</div><div class="hero-meta-label">SQL Queries</div></div>
+  </div>
+  <a href="#queries" class="hero-btn">Explore Queries</a>
+</div>
+
+<!-- SCHEMA 3D CANVAS -->
+<div class="schema-3d-wrap" id="schema">
+  <div class="section-label">Database Design</div>
+  <div class="section-title">Relational Schema</div>
+  <div class="schema-canvas-wrap">
+    <canvas id="schema-canvas" width="860" height="400"></canvas>
+  </div>
+</div>
+
+<!-- QUERIES -->
+<div class="queries-section" id="queries">
+  <div class="section-label">Analysis</div>
+  <div class="section-title">10 Business Questions</div>
+  <div class="query-grid">
+
+    <div class="q-card active" onclick="toggleQ(this)">
+      <div class="q-head">
+        <div class="q-left"><div class="q-num">01</div><div class="q-info"><div class="q-title">Business Overview — Revenue, Orders & AOV</div><div class="q-concept">COUNT · SUM · AVG · JOIN</div></div></div>
+        <div class="q-arrow">›</div>
+      </div>
+      <div class="q-body">
+        <div class="code-wrap"><pre><span class="kw">SELECT</span>
+  <span class="fn">COUNT</span>(<span class="kw">DISTINCT</span> o.order_id)              <span class="kw">AS</span> total_orders,
+  <span class="fn">ROUND</span>(<span class="fn">SUM</span>(oi.quantity * oi.unit_price))  <span class="kw">AS</span> total_revenue,
+  <span class="fn">ROUND</span>(<span class="fn">AVG</span>(oi.quantity * oi.unit_price))  <span class="kw">AS</span> avg_order_value
+<span class="kw">FROM</span> orders o
+<span class="kw">JOIN</span> order_items oi <span class="kw">ON</span> o.order_id = oi.order_id
+<span class="kw">WHERE</span> o.status = <span class="str">'Delivered'</span>;</pre></div>
+        <div class="result-wrap"><table class="rtable">
+          <tr><th>total_orders</th><th>total_revenue</th><th>avg_order_value</th></tr>
+          <tr><td class="hi">29</td><td class="hi">₹10,34,458</td><td>₹34,482</td></tr>
+        </table></div>
+      </div>
+    </div>
+
+    <div class="q-card" onclick="toggleQ(this)">
+      <div class="q-head">
+        <div class="q-left"><div class="q-num">02</div><div class="q-info"><div class="q-title">Revenue by Product Category</div><div class="q-concept">GROUP BY · JOIN · ORDER BY</div></div></div>
+        <div class="q-arrow">›</div>
+      </div>
+      <div class="q-body">
+        <div class="result-wrap"><table class="rtable">
+          <tr><th>category</th><th>items_sold</th><th>total_revenue</th></tr>
+          <tr><td class="hi">Electronics</td><td>13</td><td class="hi">₹8,92,981</td></tr>
+          <tr><td>Kitchen</td><td>6</td><td>₹60,492</td></tr>
+          <tr><td>Footwear</td><td>7</td><td>₹55,992</td></tr>
+          <tr><td>Clothing</td><td>4</td><td>₹24,993</td></tr>
+        </table></div>
+      </div>
+    </div>
+
+    <div class="q-card" onclick="toggleQ(this)">
+      <div class="q-head">
+        <div class="q-left"><div class="q-num">03</div><div class="q-info"><div class="q-title">Top 5 Products by Revenue</div><div class="q-concept">ORDER BY · LIMIT · JOIN</div></div></div>
+        <div class="q-arrow">›</div>
+      </div>
+      <div class="q-body">
+        <div class="result-wrap"><table class="rtable">
+          <tr><th>product</th><th>category</th><th>revenue</th></tr>
+          <tr><td class="hi">MacBook Air M2</td><td>Electronics</td><td class="hi">₹3,44,997</td></tr>
+          <tr><td>iPhone 15</td><td>Electronics</td><td>₹2,39,997</td></tr>
+          <tr><td>iPad Pro</td><td>Electronics</td><td>₹1,79,998</td></tr>
+          <tr><td>Samsung TV 55"</td><td>Electronics</td><td>₹1,09,998</td></tr>
+          <tr><td>Nike Air Max</td><td>Footwear</td><td>₹26,997</td></tr>
+        </table></div>
+      </div>
+    </div>
+
+    <div class="q-card" onclick="toggleQ(this)">
+      <div class="q-head">
+        <div class="q-left"><div class="q-num">04</div><div class="q-info"><div class="q-title">Top Customers by Total Spend</div><div class="q-concept">Multi-table JOIN · Ranking</div></div></div>
+        <div class="q-arrow">›</div>
+      </div>
+      <div class="q-body">
+        <div class="result-wrap"><table class="rtable">
+          <tr><th>customer</th><th>city</th><th>orders</th><th>total_spent</th></tr>
+          <tr><td class="hi">Aarav Shah</td><td>Mumbai</td><td>4</td><td class="hi">₹2,11,492</td></tr>
+          <tr><td>Rohit Verma</td><td>Bangalore</td><td>2</td><td>₹1,19,998</td></tr>
+          <tr><td>Pooja Sharma</td><td>Mumbai</td><td>1</td><td>₹1,14,999</td></tr>
+          <tr><td>Vikram Rao</td><td>Mumbai</td><td>2</td><td>₹1,00,997</td></tr>
+          <tr><td>Riya Desai</td><td>Bangalore</td><td>1</td><td>₹89,999</td></tr>
+        </table></div>
+      </div>
+    </div>
+
+    <div class="q-card" onclick="toggleQ(this)">
+      <div class="q-head">
+        <div class="q-left"><div class="q-num">07</div><div class="q-info"><div class="q-title">Repeat Purchase Rate</div><div class="q-concept">CASE WHEN · Subquery</div></div></div>
+        <div class="q-arrow">›</div>
+      </div>
+      <div class="q-body">
+        <div class="code-wrap"><pre><span class="kw">SELECT</span>
+  <span class="fn">COUNT</span>(*) <span class="kw">AS</span> total_customers,
+  <span class="fn">SUM</span>(<span class="kw">CASE WHEN</span> order_count > 1 <span class="kw">THEN</span> 1 <span class="kw">ELSE</span> 0 <span class="kw">END</span>) <span class="kw">AS</span> repeat_customers,
+  <span class="fn">ROUND</span>(100.0 * <span class="fn">SUM</span>(<span class="kw">CASE WHEN</span> order_count > 1
+    <span class="kw">THEN</span> 1 <span class="kw">ELSE</span> 0 <span class="kw">END</span>) / <span class="fn">COUNT</span>(*), 1) <span class="kw">AS</span> repeat_rate_pct
+<span class="kw">FROM</span> (<span class="kw">SELECT</span> customer_id, <span class="fn">COUNT</span>(order_id) <span class="kw">AS</span> order_count
+      <span class="kw">FROM</span> orders <span class="kw">WHERE</span> status = <span class="str">'Delivered'</span>
+      <span class="kw">GROUP BY</span> customer_id);</pre></div>
+        <div class="result-wrap"><table class="rtable">
+          <tr><th>total_customers</th><th>repeat_customers</th><th>repeat_rate_pct</th></tr>
+          <tr><td>15</td><td>8</td><td class="hi">53.3%</td></tr>
+        </table></div>
+      </div>
+    </div>
+
+    <div class="q-card" onclick="toggleQ(this)">
+      <div class="q-head">
+        <div class="q-left"><div class="q-num">10</div><div class="q-info"><div class="q-title">Month-over-Month Revenue Growth</div><div class="q-concept">CTE · Window Function LAG</div></div></div>
+        <div class="q-arrow">›</div>
+      </div>
+      <div class="q-body">
+        <div class="code-wrap"><pre><span class="kw">WITH</span> monthly <span class="kw">AS</span> (
+  <span class="kw">SELECT</span> <span class="fn">STRFTIME</span>(<span class="str">'%Y-%m'</span>, order_date) <span class="kw">AS</span> month,
+    <span class="fn">SUM</span>(oi.quantity * oi.unit_price) <span class="kw">AS</span> revenue
+  <span class="kw">FROM</span> orders o <span class="kw">JOIN</span> order_items oi <span class="kw">ON</span> o.order_id = oi.order_id
+  <span class="kw">WHERE</span> o.status = <span class="str">'Delivered'</span> <span class="kw">GROUP BY</span> month
+)
+<span class="kw">SELECT</span> month, revenue,
+  <span class="fn">LAG</span>(revenue) <span class="kw">OVER</span> (<span class="kw">ORDER BY</span> month) <span class="kw">AS</span> prev_month,
+  <span class="fn">ROUND</span>(100.0*(revenue-<span class="fn">LAG</span>(revenue) <span class="kw">OVER</span> (<span class="kw">ORDER BY</span> month))
+    /<span class="fn">LAG</span>(revenue) <span class="kw">OVER</span> (<span class="kw">ORDER BY</span> month),1) <span class="kw">AS</span> mom_growth_pct
+<span class="kw">FROM</span> monthly <span class="kw">ORDER BY</span> month;</pre></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- INSIGHTS -->
+<div class="insights-section" id="insights">
+  <div class="section-label">Findings</div>
+  <div class="section-title">Key Business Insights</div>
+  <div class="insights-grid">
+    <div class="ins-card"><div class="ins-num">86%</div><div class="ins-title">Electronics Dominates</div><div class="ins-text">Electronics drives <span class="ins-val">₹8,92,981</span> of total revenue. Diversifying into Kitchen and Footwear is the #1 growth opportunity.</div></div>
+    <div class="ins-card"><div class="ins-num">53%</div><div class="ins-title">Strong Repeat Rate</div><div class="ins-text"><span class="ins-val">8 of 15 customers</span> made repeat purchases — excellent retention for an early-stage e-commerce business.</div></div>
+    <div class="ins-card"><div class="ins-num">₹34K</div><div class="ins-title">Premium AOV</div><div class="ins-text">Average order value of <span class="ins-val">₹34,482</span> signals a premium customer base comfortable with high-value purchases.</div></div>
+    <div class="ins-card"><div class="ins-num">33%</div><div class="ins-title">Single Product Risk</div><div class="ins-text">MacBook Air M2 drives <span class="ins-val">33% of total revenue</span> alone — a product concentration risk that needs diversification.</div></div>
+    <div class="ins-card"><div class="ins-num">#1</div><div class="ins-title">Mumbai Leads</div><div class="ins-text">Mumbai customers generate the highest spend. Top customer Aarav Shah alone spent <span class="ins-val">₹2,11,492</span> across 4 orders.</div></div>
+    <div class="ins-card"><div class="ins-num">Low</div><div class="ins-title">Clothing Underperforms</div><div class="ins-text">Clothing generates only <span class="ins-val">₹24,993</span> — poor inventory mix or weak targeting of fashion-conscious buyers.</div></div>
+  </div>
+</div>
+
+<footer>
+  <span class="footer-name">Pragati Pawara — Data Analytics Portfolio</span>
+  <div class="footer-links">
+    <a href="https://github.com/pragatipawara/sql-ecommerce-analysis" target="_blank">GitHub Repo</a>
+    <a href="https://github.com/pragatipawara" target="_blank">All Projects</a>
+    <a href="mailto:pawarapragati1113@gmail.com">Contact</a>
+  </div>
+</footer>
+
+<script>
+// BG PARTICLE CANVAS
+const bgC=document.getElementById('bg-canvas');
+const bgX=bgC.getContext('2d');
+bgC.width=window.innerWidth;bgC.height=window.innerHeight;
+window.addEventListener('resize',()=>{bgC.width=window.innerWidth;bgC.height=window.innerHeight;});
+const pts=[];
+for(let i=0;i<120;i++)pts.push({x:Math.random()*window.innerWidth,y:Math.random()*window.innerHeight,vx:(Math.random()-.5)*.3,vy:(Math.random()-.5)*.3,r:Math.random()*1.5+.3});
+function animBg(){
+  bgX.clearRect(0,0,bgC.width,bgC.height);
+  pts.forEach(p=>{
+    p.x+=p.vx;p.y+=p.vy;
+    if(p.x<0||p.x>bgC.width)p.vx*=-1;
+    if(p.y<0||p.y>bgC.height)p.vy*=-1;
+    bgX.beginPath();bgX.arc(p.x,p.y,p.r,0,Math.PI*2);
+    bgX.fillStyle='rgba(0,255,136,.3)';bgX.fill();
+  });
+  for(let i=0;i<pts.length;i++)for(let j=i+1;j<pts.length;j++){
+    const d=Math.hypot(pts[i].x-pts[j].x,pts[i].y-pts[j].y);
+    if(d<100){bgX.beginPath();bgX.moveTo(pts[i].x,pts[i].y);bgX.lineTo(pts[j].x,pts[j].y);bgX.strokeStyle=`rgba(0,255,136,${(1-d/100)*.08})`;bgX.lineWidth=.5;bgX.stroke();}
+  }
+  requestAnimationFrame(animBg);
+}
+animBg();
+
+// SCHEMA 3D CANVAS
+const sc=document.getElementById('schema-canvas');
+const sx=sc.getContext('2d');
+sc.width=860;sc.height=400;
+
+const tables=[
+  {name:'customers',x:80,y:160,w:160,h:130,color:'#00ff88',fields:['PK customer_id','name','city','email','joined_date']},
+  {name:'orders',x:300,y:80,w:150,h:110,color:'#4f8ef7',fields:['PK order_id','FK customer_id','order_date','status']},
+  {name:'order_items',x:520,y:160,w:170,h:130,color:'#9b59f7',fields:['PK item_id','FK order_id','FK product_id','quantity','unit_price']},
+  {name:'products',x:720,y:80,w:120,h:110,color:'#f7c948',fields:['PK product_id','name','category','price']},
+];
+const links=[{from:0,to:1,label:'1:N'},{from:1,to:2,label:'1:N'},{from:3,to:2,label:'1:N'}];
+
+let schT=0;
+function drawSchema(){
+  sx.clearRect(0,0,860,400);
+  schT+=.008;
+
+  // Draw links
+  links.forEach(l=>{
+    const a=tables[l.from],b=tables[l.to];
+    const ax=a.x+a.w/2,ay=a.y+a.h/2,bx=b.x+b.w/2,by=b.y+b.h/2;
+    const g=sx.createLinearGradient(ax,ay,bx,by);
+    g.addColorStop(0,a.color+'88');g.addColorStop(1,b.color+'88');
+    sx.beginPath();sx.moveTo(ax,ay);sx.lineTo(bx,by);
+    sx.strokeStyle=g;sx.lineWidth=1.5;sx.setLineDash([4,4]);sx.stroke();sx.setLineDash([]);
+    const mx=(ax+bx)/2,my=(ay+by)/2;
+    sx.fillStyle='rgba(255,255,255,.5)';sx.font='500 10px JetBrains Mono,monospace';
+    sx.textAlign='center';sx.fillText(l.label,mx,my-6);
+  });
+
+  // Draw tables
+  tables.forEach((t,i)=>{
+    const pulse=Math.sin(schT+i*1.2)*.5+.5;
+    const glow=sx.createRadialGradient(t.x+t.w/2,t.y+t.h/2,0,t.x+t.w/2,t.y+t.h/2,t.w);
+    glow.addColorStop(0,t.color+'10');glow.addColorStop(1,'transparent');
+    sx.fillStyle=glow;sx.fillRect(t.x-20,t.y-20,t.w+40,t.h+40);
+
+    // Card
+    sx.beginPath();
+    roundRect(sx,t.x,t.y,t.w,t.h,10);
+    sx.fillStyle='rgba(10,10,20,.95)';sx.fill();
+    sx.strokeStyle=t.color+(Math.floor((0.3+pulse*.3)*255).toString(16).padStart(2,'0'));
+    sx.lineWidth=1.5;sx.stroke();
+
+    // Header
+    sx.beginPath();roundRect(sx,t.x,t.y,t.w,28,{tl:10,tr:10,bl:0,br:0});
+    sx.fillStyle=t.color+'22';sx.fill();
+    sx.fillStyle=t.color;sx.font='bold 11px Inter,sans-serif';
+    sx.textAlign='center';sx.fillText(t.name,t.x+t.w/2,t.y+18);
+
+    // Fields
+    sx.font='10px JetBrains Mono,monospace';sx.textAlign='left';
+    t.fields.forEach((f,fi)=>{
+      const isPK=f.startsWith('PK');const isFK=f.startsWith('FK');
+      sx.fillStyle=isPK?'#f7c948':isFK?'#4f8ef7':'rgba(255,255,255,.4)';
+      sx.fillText(f,t.x+10,t.y+42+fi*17);
+    });
+  });
+  requestAnimationFrame(drawSchema);
+}
+
+function roundRect(ctx,x,y,w,h,r){
+  if(typeof r==='number')r={tl:r,tr:r,bl:r,br:r};
+  ctx.moveTo(x+r.tl,y);ctx.lineTo(x+w-r.tr,y);ctx.quadraticCurveTo(x+w,y,x+w,y+r.tr);
+  ctx.lineTo(x+w,y+h-r.br);ctx.quadraticCurveTo(x+w,y+h,x+w-r.br,y+h);
+  ctx.lineTo(x+r.bl,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-r.bl);
+  ctx.lineTo(x,y+r.tl);ctx.quadraticCurveTo(x,y,x+r.tl,y);
+}
+drawSchema();
+
+// QUERY TOGGLE
+function toggleQ(el){
+  document.querySelectorAll('.q-card').forEach(c=>{if(c!==el){c.classList.remove('active');}});
+  el.classList.toggle('active');
+}
+
+// SCROLL ANIMATIONS
+const obs=new IntersectionObserver(e=>{e.forEach(en=>{if(en.isIntersecting){en.target.style.opacity='1';en.target.style.transform='translateY(0)';}});},{threshold:.1});
+document.querySelectorAll('.q-card,.ins-card').forEach(el=>{
+  el.style.opacity='0';el.style.transform='translateY(20px)';el.style.transition='opacity .6s ease, transform .6s ease';
+  obs.observe(el);
+});
+</script>
+</body>
+</html>
